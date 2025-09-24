@@ -216,22 +216,23 @@ void callback(const sensor_msgs::msg::Image::SharedPtr image_msg, const rclcpp::
         }
 
         // Publish TFs for each of the markers
+        
+        static std::shared_ptr<tf2_ros::TransformBroadcaster> br = nullptr;
+        if (!br) {
+            br = std::make_shared<tf2_ros::TransformBroadcaster>(node);
+        }
         geometry_msgs::msg::TransformStamped tf_msg;
-        if( publish_tf ) {
-            static std::shared_ptr<tf2_ros::TransformBroadcaster> br = nullptr;
-            if (!br) {
-                br = std::make_shared<tf2_ros::TransformBroadcaster>(node);
-            }
-            for (auto i = 0; i < rotation_vectors.size(); ++i) {
-                auto translation_vector = translation_vectors[i];
-                auto rotation_vector = rotation_vectors[i];
-                auto transform = create_transform(translation_vector, rotation_vector);
-                tf_msg.header.stamp = stamp;
-                tf_msg.header.frame_id = frame_id;
-                stringstream ss;
-                ss << marker_tf_prefix << ids[i];
-                tf_msg.child_frame_id = ss.str();
-                tf_msg.transform = transform;
+        for (auto i = 0; i < rotation_vectors.size(); ++i) {
+            auto translation_vector = translation_vectors[i];
+            auto rotation_vector = rotation_vectors[i];
+            auto transform = create_transform(translation_vector, rotation_vector);
+            tf_msg.header.stamp = stamp;
+            tf_msg.header.frame_id = frame_id;
+            stringstream ss;
+            ss << marker_tf_prefix << ids[i];
+            tf_msg.child_frame_id = ss.str();
+            tf_msg.transform = transform;
+            if( publish_tf ) {
                 br->sendTransform(tf_msg);
             }
         }
